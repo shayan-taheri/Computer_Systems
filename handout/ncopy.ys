@@ -1,0 +1,156 @@
+# Shayan Taheri (A01956093) #
+
+# Optimizing the code: #
+
+# 1) Add "iddl" instruction: Adding the "iddl" instruction has a good effect for optimizing the code because it compacts two instructions in one instruction. Therefore, There would be a fewer cycles to get the same result #
+
+# 2) Breaking the loop: The while (len > 0 ) loop can be broken to its iteration. So, we can have optimization in updating len, src, and dst. First we check the number of elements, if it is less or equal to zero, the code jumps to Done because we don't have any elements. If the number of elements is less than 8, the code jumps to OVLP to consider those 7 elements or even fewer than that. Finally, if the number of elements is greater or  equal to 8, then it first jumps to SRC procedure (SRC0, SRC1, etc) and then it will jump to OVLP to consider the extra elements. #
+
+#/* $begin ncopy-ys */
+##################################################################
+# ncopy.ys - Copy a src block of len ints to dst.
+# Return the number of positive ints (>0) contained in src.
+#
+# Include your name and ID here.
+#
+# Describe how and why you modified the baseline code.
+#
+##################################################################
+	# Function prologue. Do not modify.
+ncopy:	pushl %ebp		# Save old frame pointer
+	rrmovl %esp,%ebp	# Set up new frame pointer
+	pushl %esi		# Save callee-save regs
+	pushl %ebx
+	mrmovl 8(%ebp),%ebx	# src
+	mrmovl 12(%ebp),%ecx	# dst
+	mrmovl 16(%ebp),%edx	# len
+
+	# Loop header
+	xorl %esi,%esi		# count = 0;
+	andl %edx,%edx		# len <= 0?
+	jle Done		# if so, goto Done:
+	iaddl $-8, %edx      	# len = len - 8 
+	jl OVLP
+
+	# Loop body.
+Loop:  mrmovl (%ebx), %edi   # (SRC0) : read val from src
+       rmmovl %edi, (%ecx)   # store src[0] to dest[0]
+       andl %edi, %edi       # src[0] > 0 
+       jle SRC1              # No ? get the next element
+       iaddl $1, %esi        # count++
+
+SRC1:  mrmovl 4(%ebx), %edi  # read val from src + 4
+       rmmovl %edi, 4(%ecx)  # store src[1] in dest[1]
+       andl %edi, %edi       # src[1] > 0 
+       jle SRC2              # No ? get the next element
+       iaddl $1, %esi        # count++
+
+SRC2:  mrmovl 8(%ebx), %edi  # read val from src + 8
+       rmmovl %edi, 8(%ecx)  # store src[2] in dest[2]
+       andl %edi, %edi       # src[2] > 0 
+       jle SRC3              # No ? get the next element
+       iaddl $1, %esi        # count++
+
+SRC3:  mrmovl 12(%ebx), %edi  # read val from src + 12
+       rmmovl %edi, 12(%ecx)  # store src[3] in dest[3]
+       andl %edi, %edi        # src[3] > 0 
+       jle SRC4               # No ? get the next element
+       iaddl $1, %esi         # count++
+
+SRC4:  mrmovl 16(%ebx), %edi  # read val from src + 16
+       rmmovl %edi, 16(%ecx)  # store src[4] in dest[4]
+       andl %edi, %edi        # src[4] > 0 
+       jle SRC5               # No ? get the next element
+       iaddl $1, %esi         # count++
+
+SRC5:  mrmovl 20(%ebx), %edi  # read val from src + 20
+       rmmovl %edi, 20(%ecx)  # store src[5] in dest[5]
+       andl %edi, %edi        # src[5] > 0 
+       jle SRC6               # No ? get the next element
+       iaddl $1, %esi         # count++
+
+SRC6:  mrmovl 24(%ebx), %edi  # read val from src + 24
+       rmmovl %edi, 24(%ecx)  # store src[6] in dest[6]
+       andl %edi, %edi        # src[6] > 0 
+       jle SRC7               # No ? get the next element
+       iaddl $1, %esi         # count++
+
+SRC7:  mrmovl 28(%ebx), %edi  # read val from src + 28
+       rmmovl %edi, 28(%ecx)  # store src[7] in dest[7]
+       andl %edi, %edi        # src[7] > 0 
+       jle Update             # No ? get the next element
+       iaddl $1, %esi         # count++
+
+Update:  iaddl $32 , %ebx      # goto next eight elements of src
+	 iaddl $32 , %ecx      # goto next eight elements of dest
+	 iaddl $-8, %edx       # len = len - 8
+	 jge Loop              # if eight elements left, do again
+
+OVLP:  iaddl $8, %edx        # get actual len  
+
+# Take care of extras here:
+
+Ext1:  iaddl $-1 , %edx
+       jl Done
+       mrmovl (%ebx), %edi
+       rmmovl %edi, (%ecx)
+       andl %edi, %edi
+       jle Ext2
+       iaddl $1, %esi
+
+Ext2:  iaddl $-1 , %edx
+       jl Done
+       mrmovl 4(%ebx), %edi
+       rmmovl %edi, 4(%ecx)
+       andl %edi, %edi
+       jle Ext3
+       iaddl $1, %esi
+
+Ext3:  iaddl $-1 , %edx
+       jl Done
+       mrmovl 8(%ebx), %edi
+       rmmovl %edi, 8(%ecx)
+       andl %edi, %edi
+       jle Ext4
+       iaddl $1, %esi
+
+Ext4:  iaddl $-1 , %edx
+       jl Done
+       mrmovl 12(%ebx), %edi
+       rmmovl %edi, 12(%ecx)
+       andl %edi, %edi
+       jle Ext5
+       iaddl $1, %esi
+
+Ext5:  iaddl $-1 , %edx
+       jl Done
+       mrmovl 16(%ebx), %edi
+       rmmovl %edi, 16(%ecx)
+       andl %edi, %edi
+       jle Ext6
+       iaddl $1, %esi
+
+Ext6:  iaddl $-1 , %edx
+       jl Done
+       mrmovl 20(%ebx), %edi
+       rmmovl %edi, 20(%ecx)
+       andl %edi, %edi
+       jle Ext7
+       iaddl $1, %esi
+
+Ext7:  iaddl $-1 , %edx
+       jl Done
+       mrmovl 24(%ebx), %edi
+       rmmovl %edi, 24(%ecx)
+       andl %edi, %edi
+       jle Done
+       iaddl $1, %esi
+
+	# Function epilogue. Do not modify.
+Done:	rrmovl %esi, %eax
+	popl %ebx
+	popl %esi
+	rrmovl %ebp, %esp
+	popl %ebp
+	ret
+#/* $end ncopy-ys */

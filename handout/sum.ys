@@ -1,0 +1,63 @@
+# Shayan Taheri (A01956093)
+
+# Execution begins at address 0
+
+	.pos 0
+init:
+	irmovl Stack, %esp
+	irmovl Stack, %ebp
+	jmp Main
+
+# Sample linked list
+
+.align 4
+ele1:
+	.long 0x00a
+	.long ele2
+ele2:
+	.long 0x0b0
+	.long ele3
+ele3:
+	.long 0xc00
+	.long 0
+
+Main:
+	irmovl ele1, %edx
+	pushl %edx
+	call Sum
+	halt
+
+Sum:
+
+	pushl	%ebp
+	rrmovl	%esp, %ebp
+	irmovl	$16, %ecx
+	subl	%ecx, %esp
+	irmovl	$0, %ecx
+	rmmovl	%ecx, -4(%ebp)
+	jmp	First
+Second:
+	mrmovl	8(%ebp), %eax
+	mrmovl	(%eax), %eax
+	mrmovl	-4(%ebp), %ebx
+	addl	%eax, %ebx
+	rmmovl	%ebx, -4(%ebp)
+	mrmovl	8(%ebp), %eax
+	mrmovl	4(%eax), %eax
+	rmmovl	%eax, 8(%ebp)
+First:
+	irmovl	$0, %edx
+	mrmovl	8(%ebp), %ecx
+	subl	%edx, %ecx
+	rmmovl	%ecx, 8(%ebp)
+	jne	Second
+	mrmovl	-4(%ebp), %eax
+	leave
+	ret
+
+End:
+	popl %ebp
+	ret
+	.pos 0xca0
+
+Stack: # The stack goes here
